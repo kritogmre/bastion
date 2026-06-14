@@ -79,7 +79,7 @@ if (Test-Path $setup) {
   # same PowerShell engine that launched the installer (5.1 or 7+)
   $psExe = (Get-Process -Id $PID).Path
   if (-not $psExe) { $psExe = "powershell" }
-  if ($Update) { & $psExe -ExecutionPolicy Bypass -File $setup -NoBrowser }
+  if ($Update) { & $psExe -ExecutionPolicy Bypass -File $setup -NoBrowser -NoPause }
   else         { & $psExe -ExecutionPolicy Bypass -File $setup }
 } else {
   Warn "setup.ps1 not found - manual setup required."
