@@ -6,6 +6,7 @@
 
 # Fichiers publics (installeur + manifeste de MAJ extension + docs)
 !/install.sh
+!/install.ps1
 !/update.xml
 !/README.md
 !/GUIDE.html

@@ -9,15 +9,21 @@ Scanner de vulnérabilités web **local**, en deux parties :
 
 ---
 
-## Installation express (Kali / Debian)
+## Installation en une ligne
 
+**Linux (Kali / Debian / Ubuntu)**
 ```bash
-./install.sh             # interactif
-./install.sh --dry-run   # montre ce qu'il ferait, sans rien modifier
-./install.sh --help      # options : --yes --no-service --no-browser --no-ai --ai-model=… --uninstall
+curl -fsSL https://raw.githubusercontent.com/kritogmre/bastion/main/install.sh | bash
 ```
 
-L'installeur (aucune dépendance pip) : vérifie Python, pose la commande **`bastion`**, peut démarrer le backend à chaque session (service systemd), crée un lanceur **« Brave + Bastion »** qui charge l'extension automatiquement, et peut installer une **IA locale** (Ollama + modèle, ex. `--ai-model=qwen2.5:7b`) pour l'analyse hors-ligne. Détecte Brave (Nightly/stable/beta) et Chromium.
+**Windows (PowerShell)**
+```powershell
+irm https://raw.githubusercontent.com/kritogmre/bastion/main/install.ps1 | iex
+```
+
+L'installeur télécharge la dernière release (backend protégé + extension signée), **vérifie le sha256**, installe Bastion, met en place la commande **`bastion`**, démarre le backend automatiquement à chaque session, et **force-installe l'extension** dans Brave / Chrome / Chromium (elle apparaît toute seule après redémarrage du navigateur, et se met à jour automatiquement). Aucune dépendance pip. Sur Windows, Python 3.13 est installé via winget si nécessaire.
+
+> Désinstaller : `~/.local/share/bastion/setup.sh --uninstall` (Linux) · `& "$env:LOCALAPPDATA\Bastion\setup.ps1" -Uninstall` (Windows).
 
 ---
 
