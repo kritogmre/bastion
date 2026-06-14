@@ -39,9 +39,11 @@ ok "curl + $(python3 -V 2>&1)"
 # ---------- résoudre la dernière release ----------
 step "2/4 · Recherche de la dernière version"
 META="$(curl -fsSL "$API")" || die "Impossible de joindre l'API GitHub ($API)."
-read -r TAG TARBALL_URL SHA_URL < <(printf '%s' "$META" | python3 - <<'PY'
-import json, sys
-m = json.load(sys.stdin)
+# On passe META par variable d'environnement : avec `python3 - <<'PY'` le heredoc
+# EST le programme, donc sys.stdin n'est pas disponible pour les données.
+read -r TAG TARBALL_URL SHA_URL < <(BASTION_META="$META" python3 - <<'PY'
+import json, os
+m = json.loads(os.environ["BASTION_META"])
 tag = m.get("tag_name", "")
 tb = sha = ""
 for a in m.get("assets", []):
