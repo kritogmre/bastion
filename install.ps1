@@ -37,7 +37,9 @@ New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $zip = Join-Path $tmp "bastion.zip"
 Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers @{ "User-Agent" = "bastion-installer" }
 if ($shaA) {
-  $expect = ((Invoke-WebRequest -Uri $shaA.browser_download_url -Headers @{ "User-Agent" = "bastion-installer" }).Content -split '\s+')[0].Trim().ToLower()
+  $shaFile = Join-Path $tmp "bastion.zip.sha256"
+  Invoke-WebRequest -Uri $shaA.browser_download_url -OutFile $shaFile -Headers @{ "User-Agent" = "bastion-installer" }
+  $expect = ((Get-Content -Raw $shaFile) -split '\s+')[0].Trim().ToLower()
   $got = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower()
   if ($expect -ne $got) { Die "Somme de contrôle invalide ! (téléchargement corrompu/altéré)" }
   Ok "sha256 vérifié"
@@ -58,7 +60,10 @@ Ok "installé dans $InstallDir"
 $setup = Join-Path $InstallDir "setup.ps1"
 if (Test-Path $setup) {
   Info "lancement du configurateur...`n"
-  & powershell -ExecutionPolicy Bypass -File $setup
+  # même moteur PowerShell que celui qui a lancé l'installeur (5.1 ou 7+)
+  $psExe = (Get-Process -Id $PID).Path
+  if (-not $psExe) { $psExe = "powershell" }
+  & $psExe -ExecutionPolicy Bypass -File $setup
 } else {
   Warn "setup.ps1 introuvable - configuration manuelle requise."
 }
