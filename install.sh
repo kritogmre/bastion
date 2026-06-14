@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Bastion — installeur en une ligne (Linux)
+# Bastion — one-line installer (Linux)
 #
 #   curl -fsSL https://raw.githubusercontent.com/kritogmre/bastion/main/install.sh | bash
 #
-# Télécharge la dernière release (backend obfusqué + extension signée), vérifie
-# l'intégrité (sha256), installe dans ~/.local/share/bastion, puis lance le
-# configurateur (CLI + service backend + extension navigateur).
-# Aucune dépendance pip. Usage strictement autorisé.
+# Downloads the latest release (native backend + signed extension), verifies
+# integrity (sha256), installs into ~/.local/share/bastion, then runs the
+# configurator (CLI + backend service + browser extension).
+# No dependencies. Authorized use only.
 set -euo pipefail
 
 OWNER="kritogmre"
@@ -25,57 +25,59 @@ err()  { printf "  ${E}✗ %b${R}\n" "$*" >&2; }
 step() { printf "\n${B}${M}▎%b${R}\n" "$*"; }
 die()  { err "$*"; exit 1; }
 
-printf "${M}${B}\n   🛡  Bastion — installeur${R}\n"
+printf "${M}${B}\n   🛡  Bastion — installer${R}\n"
 
 # ---------- pré-requis ----------
-# Aucune dépendance Python ici : le backend embarque son propre Python 3.13.
-step "1/4 · Pré-requis"
-command -v curl >/dev/null 2>&1 || die "curl est requis (sudo apt install -y curl)."
-command -v tar  >/dev/null 2>&1 || die "tar est requis."
-command -v sha256sum >/dev/null 2>&1 || die "sha256sum est requis (coreutils)."
+# No Python needed here: the backend ships as a native binary.
+step "1/4 · Prerequisites"
+command -v curl >/dev/null 2>&1 || die "curl is required (sudo apt install -y curl)."
+command -v tar  >/dev/null 2>&1 || die "tar is required."
+command -v sha256sum >/dev/null 2>&1 || die "sha256sum is required (coreutils)."
 ok "curl + tar + sha256sum"
-[ "${OWNER:0:2}" = "__" ] && die "Installeur non publié (OWNER/REPO non renseignés)."
+[ "${OWNER:0:2}" = "__" ] && die "Installer not published (OWNER/REPO not set)."
 
 # ---------- résoudre la dernière release ----------
-step "2/4 · Recherche de la dernière version"
-META="$(curl -fsSL "$API")" || die "Impossible de joindre l'API GitHub ($API)."
-# Parsing sans Python (grep/sed) → marche sur n'importe quel Linux.
+step "2/4 · Finding the latest version"
+META="$(curl -fsSL "$API")" || die "Cannot reach the GitHub API ($API)."
+# Parse without Python (grep/sed) → works on any Linux.
 TAG="$(printf '%s' "$META" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
 TARBALL_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
 SHA_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz\.sha256"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
-[ -n "$TARBALL_URL" ] || die "Aucun paquet Linux dans la dernière release."
+[ -n "$TARBALL_URL" ] || die "No Linux package in the latest release."
 ok "version ${B}$TAG${R}"
 
 # ---------- télécharger + vérifier ----------
-step "3/4 · Téléchargement & vérification"
+step "3/4 · Download & verify"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-curl -fL# "$TARBALL_URL" -o "$TMP/bastion.tar.gz" || die "Échec du téléchargement."
+curl -fL# "$TARBALL_URL" -o "$TMP/bastion.tar.gz" || die "Download failed."
 if [ -n "$SHA_URL" ] && curl -fsSL "$SHA_URL" -o "$TMP/bastion.sha256"; then
   EXPECT="$(cut -d' ' -f1 "$TMP/bastion.sha256")"
   GOT="$(sha256sum "$TMP/bastion.tar.gz" | cut -d' ' -f1)"
-  [ "$EXPECT" = "$GOT" ] || die "Somme de contrôle invalide ! (téléchargement corrompu/altéré)"
-  ok "sha256 vérifié"
+  [ "$EXPECT" = "$GOT" ] || die "Invalid checksum! (corrupted/tampered download)"
+  ok "sha256 verified"
 else
-  warn "pas de sha256 publié — intégrité non vérifiée"
+  warn "no sha256 published — integrity not verified"
 fi
 
 # ---------- installer ----------
 step "4/4 · Installation"
+# stop a running backend (update) — otherwise the binary is busy (ETXTBSY)
+command -v systemctl >/dev/null 2>&1 && systemctl --user stop bastion.service 2>/dev/null || true
 mkdir -p "$INSTALL_DIR"
-# nettoyage de l'ancienne version (on garde la config utilisateur ~/.config/bastion)
+# clean the old version (user config in ~/.config/bastion is kept)
 rm -rf "$INSTALL_DIR.old"
-[ -d "$INSTALL_DIR/backend" ] && mv "$INSTALL_DIR" "$INSTALL_DIR.old" && mkdir -p "$INSTALL_DIR"
+[ -e "$INSTALL_DIR/app" ] || [ -e "$INSTALL_DIR/backend" ] && mv "$INSTALL_DIR" "$INSTALL_DIR.old" && mkdir -p "$INSTALL_DIR"
 tar -xzf "$TMP/bastion.tar.gz" -C "$TMP"
-# le tarball contient un dossier bastion/
+# the tarball contains a bastion/ folder
 cp -r "$TMP/bastion/." "$INSTALL_DIR/"
 rm -rf "$INSTALL_DIR.old"
-ok "installé dans ${B}$INSTALL_DIR${R}"
+ok "installed in ${B}$INSTALL_DIR${R}"
 
 if [ -x "$INSTALL_DIR/setup.sh" ]; then
-  info "lancement du configurateur…\n"
-  # transmet les éventuels arguments (ex: --yes) à setup.sh
+  info "starting the configurator…\n"
+  # pass through any args (e.g. --yes) to setup.sh
   exec "$INSTALL_DIR/setup.sh" "$@"
 else
-  warn "setup.sh introuvable dans le paquet — configuration manuelle requise."
-  info "Backend : python3 $INSTALL_DIR/backend/bastion.py serve"
+  warn "setup.sh not found in the package — manual setup required."
+  info "Backend: $INSTALL_DIR/app/bastion.bin serve"
 fi

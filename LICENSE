@@ -1,21 +1,33 @@
-Bastion — Logiciel propriétaire
-Copyright (c) 2026 — Tous droits réservés.
+Bastion — Proprietary Software License
+Copyright (c) 2026 kritogmre. All rights reserved.
 
-Ce logiciel et son code source associé ne sont PAS open source.
+This software and its associated source code are NOT open source.
 
-Le code distribué (backend) est volontairement obfusqué. Sont INTERDITS sans
-autorisation écrite préalable du titulaire des droits :
-  - la décompilation, le désassemblage, la rétro-ingénierie ou toute tentative
-    de retrouver le code source à partir des binaires/bytecode distribués ;
-  - la redistribution, la revente, la sous-licence ou la mise à disposition
-    publique de tout ou partie du logiciel ;
-  - la suppression ou l'altération des présentes mentions.
+The distributed code (backend) is compiled to native code on purpose. Without the
+prior written permission of the copyright holder, the following are PROHIBITED:
+  - decompiling, disassembling, reverse-engineering, or otherwise attempting to
+    recover the source code from the distributed binaries;
+  - redistributing, reselling, sublicensing, or publicly making available all or
+    part of the software;
+  - removing or altering this notice.
 
-L'usage est accordé à titre personnel aux personnes ayant reçu le logiciel
-directement du titulaire des droits, à des fins de test de sécurité
-AUTORISÉ uniquement (cibles possédées ou pour lesquelles une permission
-explicite a été obtenue). Toute utilisation contre des systèmes non
-autorisés est strictement interdite et relève de la seule responsabilité
-de l'utilisateur.
+A personal, non-transferable right to use the software is granted to individuals
+who received it directly from the copyright holder, for AUTHORIZED security
+testing only — that is, against systems they own or for which they have obtained
+explicit, written permission to test (penetration testing, bug bounty within
+scope, CTF, your own infrastructure).
 
-LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE.
+PROHIBITED USE. Any use against systems without authorization is strictly
+forbidden, is likely illegal in most jurisdictions, and is the sole
+responsibility of the user. The copyright holder declines all liability for any
+misuse or for any direct or indirect damage resulting from the use of the
+software.
+
+NO WARRANTY. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO
+EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+By installing or using Bastion, you acknowledge that you have read, understood,
+and agree to be bound by these terms.

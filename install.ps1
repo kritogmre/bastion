@@ -1,10 +1,10 @@
-# Bastion - installeur en une ligne (Windows)
+# Bastion - one-line installer (Windows)
 #
 #   irm https://raw.githubusercontent.com/kritogmre/bastion/main/install.ps1 | iex
 #
-# Télécharge la dernière release Windows (backend obfusqué + extension signée),
-# vérifie l'intégrité (sha256), installe dans %LOCALAPPDATA%\Bastion, puis lance
-# le configurateur. Usage strictement autorisé.
+# Downloads the latest Windows release (native backend + signed extension),
+# verifies integrity (sha256), installs into %LOCALAPPDATA%\Bastion, then runs
+# the configurator. Authorized use only.
 $ErrorActionPreference = "Stop"
 
 $Owner = "kritogmre"
@@ -18,20 +18,20 @@ function Warn($m) { Write-Host "  [!] $m"   -ForegroundColor Yellow }
 function Step($m) { Write-Host "`n# $m"     -ForegroundColor Magenta }
 function Die($m)  { Write-Host "  [X] $m"   -ForegroundColor Red; exit 1 }
 
-Write-Host "`n   Bastion - installeur Windows" -ForegroundColor Magenta
+Write-Host "`n   Bastion - installer (Windows)" -ForegroundColor Magenta
 
 # ---------- dernière release ----------
-Step "1/3 - Recherche de la dernière version"
+Step "1/3 - Finding the latest version"
 try {
   $meta = Invoke-RestMethod -Uri $Api -Headers @{ "User-Agent" = "bastion-installer" }
-} catch { Die "Impossible de joindre l'API GitHub ($Api)" }
+} catch { Die "Cannot reach the GitHub API ($Api)" }
 $asset = $meta.assets | Where-Object { $_.name -like "*-windows.zip" }     | Select-Object -First 1
 $shaA  = $meta.assets | Where-Object { $_.name -like "*-windows.zip.sha256" } | Select-Object -First 1
-if (-not $asset) { Die "Aucun paquet Windows dans la dernière release." }
+if (-not $asset) { Die "No Windows package in the latest release." }
 Ok "version $($meta.tag_name)"
 
 # ---------- télécharger + vérifier ----------
-Step "2/3 - Téléchargement & vérification"
+Step "2/3 - Download & verify"
 $tmp = Join-Path $env:TEMP ("bastion_" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $zip = Join-Path $tmp "bastion.zip"
@@ -41,29 +41,33 @@ if ($shaA) {
   Invoke-WebRequest -Uri $shaA.browser_download_url -OutFile $shaFile -Headers @{ "User-Agent" = "bastion-installer" }
   $expect = ((Get-Content -Raw $shaFile) -split '\s+')[0].Trim().ToLower()
   $got = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower()
-  if ($expect -ne $got) { Die "Somme de contrôle invalide ! (téléchargement corrompu/altéré)" }
-  Ok "sha256 vérifié"
-} else { Warn "pas de sha256 publié - intégrité non vérifiée" }
+  if ($expect -ne $got) { Die "Invalid checksum! (corrupted/tampered download)" }
+  Ok "sha256 verified"
+} else { Warn "no sha256 published - integrity not verified" }
 
 # ---------- installer ----------
 Step "3/3 - Installation"
-if (Test-Path (Join-Path $InstallDir "backend")) {
+# stop a running backend (otherwise app\bastion.exe cannot be replaced)
+try { schtasks /End /TN "Bastion Backend" 2>$null | Out-Null } catch { $null = $_ }
+try { Get-Process bastion -EA SilentlyContinue | Stop-Process -Force -EA SilentlyContinue } catch { $null = $_ }
+Start-Sleep -Milliseconds 600
+if (Test-Path (Join-Path $InstallDir "app")) {
   Get-ChildItem $InstallDir -Exclude "bin" | Remove-Item -Recurse -Force -EA SilentlyContinue
 }
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Expand-Archive -Path $zip -DestinationPath $tmp -Force
-# l'archive contient un dossier bastion\
+# the archive contains a bastion\ folder
 Copy-Item -Path (Join-Path $tmp "bastion\*") -Destination $InstallDir -Recurse -Force
 Remove-Item -Recurse -Force $tmp -EA SilentlyContinue
-Ok "installé dans $InstallDir"
+Ok "installed in $InstallDir"
 
 $setup = Join-Path $InstallDir "setup.ps1"
 if (Test-Path $setup) {
-  Info "lancement du configurateur...`n"
-  # même moteur PowerShell que celui qui a lancé l'installeur (5.1 ou 7+)
+  Info "starting the configurator...`n"
+  # same PowerShell engine that launched the installer (5.1 or 7+)
   $psExe = (Get-Process -Id $PID).Path
   if (-not $psExe) { $psExe = "powershell" }
   & $psExe -ExecutionPolicy Bypass -File $setup
 } else {
-  Warn "setup.ps1 introuvable - configuration manuelle requise."
+  Warn "setup.ps1 not found - manual setup required."
 }
