@@ -74,9 +74,13 @@ rm -rf "$INSTALL_DIR.old"
 ok "installed in ${B}$INSTALL_DIR${R}"
 
 if [ -x "$INSTALL_DIR/setup.sh" ]; then
-  info "starting the configurator…\n"
-  # pass through any args (e.g. --yes) to setup.sh
-  exec "$INSTALL_DIR/setup.sh" "$@"
+  # --update (triggered by the in-app updater): only refresh files + restart the
+  # backend. Skip the browser policy (sudo) and the local AI install (Ollama).
+  case " $* " in
+    *" --update "*) SETUP_ARGS="--yes --no-browser --no-ai"; info "update: refreshing & restarting…\n" ;;
+    *)              SETUP_ARGS="$*";                          info "starting the configurator…\n" ;;
+  esac
+  exec "$INSTALL_DIR/setup.sh" $SETUP_ARGS
 else
   warn "setup.sh not found in the package — manual setup required."
   info "Backend: $INSTALL_DIR/app/bastion.bin serve"

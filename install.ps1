@@ -5,6 +5,8 @@
 # Downloads the latest Windows release (native backend + signed extension),
 # verifies integrity (sha256), installs into %LOCALAPPDATA%\Bastion, then runs
 # the configurator. Authorized use only.
+#   -Update : refresh + restart only (in-app updater), skips re-posing the policy.
+param([switch]$Update)
 $ErrorActionPreference = "Stop"
 
 $Owner = "kritogmre"
@@ -67,7 +69,8 @@ if (Test-Path $setup) {
   # same PowerShell engine that launched the installer (5.1 or 7+)
   $psExe = (Get-Process -Id $PID).Path
   if (-not $psExe) { $psExe = "powershell" }
-  & $psExe -ExecutionPolicy Bypass -File $setup
+  if ($Update) { & $psExe -ExecutionPolicy Bypass -File $setup -NoBrowser }
+  else         { & $psExe -ExecutionPolicy Bypass -File $setup }
 } else {
   Warn "setup.ps1 not found - manual setup required."
 }
