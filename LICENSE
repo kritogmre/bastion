@@ -1,0 +1,21 @@
+Bastion — Logiciel propriétaire
+Copyright (c) 2026 — Tous droits réservés.
+
+Ce logiciel et son code source associé ne sont PAS open source.
+
+Le code distribué (backend) est volontairement obfusqué. Sont INTERDITS sans
+autorisation écrite préalable du titulaire des droits :
+  - la décompilation, le désassemblage, la rétro-ingénierie ou toute tentative
+    de retrouver le code source à partir des binaires/bytecode distribués ;
+  - la redistribution, la revente, la sous-licence ou la mise à disposition
+    publique de tout ou partie du logiciel ;
+  - la suppression ou l'altération des présentes mentions.
+
+L'usage est accordé à titre personnel aux personnes ayant reçu le logiciel
+directement du titulaire des droits, à des fins de test de sécurité
+AUTORISÉ uniquement (cibles possédées ou pour lesquelles une permission
+explicite a été obtenue). Toute utilisation contre des systèmes non
+autorisés est strictement interdite et relève de la seule responsabilité
+de l'utilisateur.
+
+LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE.

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bastion — Mode d'emploi</title>
+<style>
+:root{--bg:#0c0e14;--card:#13161f;--card2:#181c28;--border:#222634;--text:#e6e8ee;
+--muted:#8a8f98;--accent:#6c8cff;--accent2:#8a6cff;--ok:#39d98a;--warn:#ffc043;--bad:#ff3b6b;
+--mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#141826,#0c0e14);
+color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.65;padding:42px 18px}
+.wrap{max-width:760px;margin:auto}
+header{display:flex;align-items:center;gap:16px;margin-bottom:6px}
+header img{width:56px;height:56px;filter:drop-shadow(0 6px 16px rgba(108,140,255,.4))}
+h1{font-size:24px;margin:0}
+.badge{font-size:10px;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:2px 9px;vertical-align:middle;margin-left:6px}
+.lead{color:#c3c7d1;margin:10px 0 6px}
+.warn{background:rgba(255,192,67,.08);border:1px solid rgba(255,192,67,.3);border-radius:12px;
+padding:12px 16px;color:#ffd98a;margin:18px 0 28px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 22px;margin:14px 0}
+.card h2{font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:10px}
+.num{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;flex:none;
+background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-radius:8px;font-size:13px}
+ol,ul{margin:8px 0;padding-left:22px}li{margin:4px 0}
+code{background:#0c0e14;border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:12.5px;color:#9ad36a}
+.kbd{background:#0c0e14;border:1px solid #2a2f3e;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:12px;color:#c9cdd8}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle}
+.green{background:var(--ok)}.red{background:var(--bad)}
+.pill{display:inline-block;font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--c);color:var(--c)}
+.note{border-left:3px solid var(--accent);background:#141826;border-radius:0 10px 10px 0;padding:10px 14px;margin:12px 0;font-size:13px;color:#bcc0cc}
+.note.bad{border-left-color:var(--bad);background:#1a1320;color:#f0bcc6}
+.foot{color:#5b606b;font-size:11.5px;text-align:center;margin-top:30px}
+b{color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="extension/icons/icon128.png" alt="Bastion">
+    <div>
+      <h1>Bastion — Mode d'emploi <span class="badge">⚡ Powered by Claude</span></h1>
+      <div class="lead">Scanner de vulnérabilités web : trouve les failles d'un site, donne une note A→F, et fait analyser le tout par une IA.</div>
+    </div>
+  </header>
+
+  <div class="warn">⚠️ <b>Règle d'or :</b> ne scanne que des sites qui t'<b>appartiennent</b> ou pour lesquels tu as une <b>autorisation</b> (ton site, ton lab, un CTF, un bug bounty dans le périmètre). Le « scan actif » envoie de vraies attaques — pour t'entraîner sans risque, utilise la démo (section 8).</div>
+
+  <p class="lead">Deux morceaux qui travaillent ensemble : un <b>backend</b> (programme local qui fait le scan) et l'<b>extension</b> Brave 🛡 (la télécommande).</p>
+
+  <div class="card"><h2><span class="num">1</span> Installer (une fois)</h2>
+    Double-clique sur <b>«&nbsp;🛡 Installer Bastion&nbsp;»</b> (bureau), ou lance <code>./install.sh</code> dans le dossier du projet. Ça vérifie Python, ajoute la commande <code>bastion</code>, démarre le backend au login et prépare l'extension.
+    <div class="note">Pour tout retirer plus tard : <code>./install.sh --uninstall</code> (réversible, garde ta clé IA).</div>
+  </div>
+
+  <div class="card"><h2><span class="num">2</span> Charger l'extension dans Brave (une fois)</h2>
+    <ol>
+      <li>Va sur <code>brave://extensions</code></li>
+      <li>Active <b>« Mode développeur »</b> (en haut à droite)</li>
+      <li>Clique <b>« Charger l'extension non empaquetée »</b></li>
+      <li>Choisis le dossier <code>bastion/extension</code></li>
+      <li>Épingle l'icône 🛡 via la pièce de puzzle 🧩 de la barre</li>
+    </ol>
+    <div class="note">Si un bandeau « Désactiver les extensions en mode développeur » apparaît : ferme-le, ne clique pas sur <i>Désactiver</i>.</div>
+  </div>
+
+  <div class="card"><h2><span class="num">3</span> Lancer un scan</h2>
+    <ol>
+      <li>Ouvre l'onglet du site à tester (un site <b>autorisé</b>)</li>
+      <li>Clique l'icône 🛡</li>
+      <li>Le point d'état en haut : <span class="dot green"></span> vert = prêt &nbsp;·&nbsp; <span class="dot red"></span> rouge = backend éteint (section 7)</li>
+      <li>(Option) coche <b>« Scan actif »</b> — voir section 4</li>
+      <li>Clique <b>« Lancer le scan »</b></li>
+    </ol>
+  </div>
+
+  <div class="card"><h2><span class="num">4</span> Scan passif vs actif</h2>
+    <ul>
+      <li><b>Passif</b> (défaut) : observe seulement (en-têtes, cookies, TLS, librairies JS, secrets visibles). N'envoie aucune attaque. Sûr partout.</li>
+      <li><b>Actif</b> : envoie en plus de vraies charges de test (XSS, injection SQL, recherche de fichiers cachés). Plus complet mais <b>intrusif</b> → cibles autorisées uniquement.</li>
+    </ul>
+  </div>
+
+  <div class="card"><h2><span class="num">5</span> Lire les résultats</h2>
+    <ul>
+      <li>La <b>jauge</b> donne une note A→F et un score /100.</li>
+      <li>Les pastilles comptent par gravité :
+        <span class="pill" style="--c:#ff3b6b">critical</span>
+        <span class="pill" style="--c:#ff7849">high</span>
+        <span class="pill" style="--c:#ffc043">medium</span>
+        <span class="pill" style="--c:#4cc9f0">low</span>
+        <span class="pill" style="--c:#8a8f98">info</span>
+      </li>
+      <li>Clique un filtre pour ne garder qu'un niveau ; clique un finding pour le déplier (description, URL, preuve, et le <b>correctif</b>).</li>
+      <li><b>Exporter JSON</b> sauvegarde le rapport (un rapport HTML complet est aussi généré en ligne de commande).</li>
+    </ul>
+  </div>
+
+  <div class="card"><h2><span class="num">6</span> Analyser avec l'IA (Claude)</h2>
+    Après un scan, <b>« ✦ Analyser avec l'IA »</b> envoie les résultats à Claude qui rédige synthèse, priorités, faux positifs et quick wins, en français.
+    <ol>
+      <li>Ouvre <code>http://127.0.0.1:8777/config</code></li>
+      <li>Choisis le fournisseur, colle ta clé, <b>« Tester la connexion »</b></li>
+      <li>Reviens dans l'extension → <b>« ✦ Analyser avec l'IA »</b></li>
+    </ol>
+    <div class="note">🔒 Ta clé reste sur ta machine (<code>~/.config/bastion/config.json</code>, lisible par toi seul) — jamais dans le navigateur, jamais dans le projet partagé.</div>
+    <div class="note bad">💳 Si « Tester » affiche <b>« Crédit insuffisant »</b> : ta clé est valide mais ton compte Anthropic n'a pas de crédit → ajoute des crédits sur <code>console.anthropic.com</code> (Plans &amp; Billing), <b>ou</b> utilise un modèle <b>local gratuit</b> : installe Ollama, choisis le fournisseur « compatible OpenAI », base URL <code>http://localhost:11434/v1</code>, modèle ex. <code>llama3.1</code>.</div>
+  </div>
+
+  <div class="card"><h2><span class="num">7</span> Le point est rouge ?</h2>
+    L'extension a besoin du backend allumé. Si <span class="dot red"></span> : il devrait démarrer seul (service installé). Sinon, dans un terminal : <code>bastion-serve</code>, puis rouvre la popup → <span class="dot green"></span>.
+  </div>
+
+  <div class="card"><h2><span class="num">8</span> S'entraîner sans risque (démo légale)</h2>
+    Dans un terminal : <code>python3 ~/bastion/examples/vulnerable_server.py</code><br>
+    Puis ouvre <code>http://127.0.0.1:8000</code> dans Brave et scanne-le → score <b>F</b> et plein de findings (c'est voulu).
+  </div>
+
+  <div class="card"><h2><span class="num">9</span> Dépannage rapide</h2>
+    <ul>
+      <li>Point rouge / « backend introuvable » → lance <code>bastion-serve</code></li>
+      <li>Le bouton « Scan actif » ne bascule pas, ou après une mise à jour → recharge l'extension : <code>brave://extensions</code> → <span class="kbd">↻</span> sur Bastion</li>
+      <li>L'IA dit « no_key » → configure ta clé (section 6)</li>
+      <li>Rien sur une page <code>brave://…</code> → normal, ouvre un vrai site</li>
+    </ul>
+  </div>
+
+  <div class="card"><h2>⌨️ En ligne de commande (bonus)</h2>
+    <code>bastion https://mon-site.fr --active</code> &nbsp;— scan + rapport HTML<br>
+    <code>bastion https://mon-site.fr --compare ancien.json</code> &nbsp;— comparer deux scans<br>
+    <code>bastion-serve</code> &nbsp;— démarrer l'API
+  </div>
+
+  <div class="foot">Documentation complète : <code>README.md</code> · Usage strictement autorisé. Bon scan. 🛡</div>
+</div>
+</body>
+</html>

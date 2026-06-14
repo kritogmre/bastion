@@ -1,0 +1,14 @@
+# ── Bastion · repo PUBLIC de distribution ───────────────────────────────
+# Sécurité : on IGNORE TOUT par défaut, puis on ré-autorise UNIQUEMENT les
+# fichiers destinés à la distribution. La source Python (.py) n'est jamais
+# suivie → impossible de la pousser par accident.
+/*
+
+# Fichiers publics (installeur + manifeste de MAJ extension + docs)
+!/install.sh
+!/update.xml
+!/README.md
+!/GUIDE.html
+!/VERSION
+!/LICENSE
+!/.gitignore
