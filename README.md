@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/kritogmre/bastion/main/install.sh |
 irm https://raw.githubusercontent.com/kritogmre/bastion/main/install.ps1 | iex
 ```
 
-L'installeur télécharge la dernière release (backend protégé + extension signée), **vérifie le sha256**, installe Bastion, met en place la commande **`bastion`**, démarre le backend automatiquement à chaque session, et **force-installe l'extension** dans Brave / Chrome / Chromium (elle apparaît toute seule après redémarrage du navigateur, et se met à jour automatiquement). Aucune dépendance pip. Sur Windows, Python 3.13 est installé via winget si nécessaire.
+L'installeur télécharge la dernière release (backend protégé + extension signée), **vérifie le sha256**, installe Bastion, met en place la commande **`bastion`**, démarre le backend automatiquement à chaque session, et **force-installe l'extension** dans Brave / Chrome / Chromium (elle apparaît toute seule après redémarrage du navigateur, et se met à jour automatiquement). **Aucune dépendance à installer** : un Python autonome est embarqué dans le paquet — rien d'autre n'est requis sur la machine (ni Python, ni pip), sur Linux comme sur Windows.
 
 > Désinstaller : `~/.local/share/bastion/setup.sh --uninstall` (Linux) · `& "$env:LOCALAPPDATA\Bastion\setup.ps1" -Uninstall` (Windows).
 

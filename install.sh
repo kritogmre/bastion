@@ -28,31 +28,21 @@ die()  { err "$*"; exit 1; }
 printf "${M}${B}\n   🛡  Bastion — installeur${R}\n"
 
 # ---------- pré-requis ----------
+# Aucune dépendance Python ici : le backend embarque son propre Python 3.13.
 step "1/4 · Pré-requis"
 command -v curl >/dev/null 2>&1 || die "curl est requis (sudo apt install -y curl)."
-command -v python3 >/dev/null 2>&1 || die "python3 est requis (sudo apt install -y python3)."
-python3 -c 'import sys; raise SystemExit(0 if sys.version_info>=(3,8) else 1)' \
-  || die "Python 3.8+ requis (trouvé $(python3 -V 2>&1))."
-ok "curl + $(python3 -V 2>&1)"
+command -v tar  >/dev/null 2>&1 || die "tar est requis."
+command -v sha256sum >/dev/null 2>&1 || die "sha256sum est requis (coreutils)."
+ok "curl + tar + sha256sum"
 [ "${OWNER:0:2}" = "__" ] && die "Installeur non publié (OWNER/REPO non renseignés)."
 
 # ---------- résoudre la dernière release ----------
 step "2/4 · Recherche de la dernière version"
 META="$(curl -fsSL "$API")" || die "Impossible de joindre l'API GitHub ($API)."
-# On passe META par variable d'environnement : avec `python3 - <<'PY'` le heredoc
-# EST le programme, donc sys.stdin n'est pas disponible pour les données.
-read -r TAG TARBALL_URL SHA_URL < <(BASTION_META="$META" python3 - <<'PY'
-import json, os
-m = json.loads(os.environ["BASTION_META"])
-tag = m.get("tag_name", "")
-tb = sha = ""
-for a in m.get("assets", []):
-    n = a["name"]
-    if n.endswith("-linux.tar.gz"):       tb = a["browser_download_url"]
-    elif n.endswith("-linux.tar.gz.sha256"): sha = a["browser_download_url"]
-print(tag, tb, sha)
-PY
-)
+# Parsing sans Python (grep/sed) → marche sur n'importe quel Linux.
+TAG="$(printf '%s' "$META" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
+TARBALL_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
+SHA_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz\.sha256"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
 [ -n "$TARBALL_URL" ] || die "Aucun paquet Linux dans la dernière release."
 ok "version ${B}$TAG${R}"
 
