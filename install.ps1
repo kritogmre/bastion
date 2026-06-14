@@ -6,7 +6,8 @@
 # verifies integrity (sha256), installs into %LOCALAPPDATA%\Bastion, then runs
 # the configurator. Authorized use only.
 #   -Update : refresh + restart only (in-app updater), skips re-posing the policy.
-param([switch]$Update)
+#   -Local <path> : use an already-downloaded+verified package (skips download).
+param([switch]$Update, [string]$Local = "")
 $ErrorActionPreference = "Stop"
 
 $Owner = "kritogmre"
@@ -22,30 +23,39 @@ function Die($m)  { Write-Host "  [X] $m"   -ForegroundColor Red; exit 1 }
 
 Write-Host "`n   Bastion - installer (Windows)" -ForegroundColor Magenta
 
-# ---------- dernière release ----------
-Step "1/3 - Finding the latest version"
-try {
-  $meta = Invoke-RestMethod -Uri $Api -Headers @{ "User-Agent" = "bastion-installer" }
-} catch { Die "Cannot reach the GitHub API ($Api)" }
-$asset = $meta.assets | Where-Object { $_.name -like "*-windows.zip" }     | Select-Object -First 1
-$shaA  = $meta.assets | Where-Object { $_.name -like "*-windows.zip.sha256" } | Select-Object -First 1
-if (-not $asset) { Die "No Windows package in the latest release." }
-Ok "version $($meta.tag_name)"
-
-# ---------- télécharger + vérifier ----------
-Step "2/3 - Download & verify"
 $tmp = Join-Path $env:TEMP ("bastion_" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $zip = Join-Path $tmp "bastion.zip"
-Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers @{ "User-Agent" = "bastion-installer" }
-if ($shaA) {
-  $shaFile = Join-Path $tmp "bastion.zip.sha256"
-  Invoke-WebRequest -Uri $shaA.browser_download_url -OutFile $shaFile -Headers @{ "User-Agent" = "bastion-installer" }
-  $expect = ((Get-Content -Raw $shaFile) -split '\s+')[0].Trim().ToLower()
-  $got = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower()
-  if ($expect -ne $got) { Die "Invalid checksum! (corrupted/tampered download)" }
-  Ok "sha256 verified"
-} else { Warn "no sha256 published - integrity not verified" }
+
+if ($Local) {
+  # package already downloaded + verified by the backend (in-app update)
+  Step "1/3 - Local package"
+  if (-not (Test-Path $Local)) { Die "Local package not found: $Local" }
+  Copy-Item $Local $zip -Force
+  Ok "using pre-downloaded package"
+} else {
+  # ---------- latest release ----------
+  Step "1/3 - Finding the latest version"
+  try {
+    $meta = Invoke-RestMethod -Uri $Api -Headers @{ "User-Agent" = "bastion-installer" }
+  } catch { Die "Cannot reach the GitHub API ($Api)" }
+  $asset = $meta.assets | Where-Object { $_.name -like "*-windows.zip" }     | Select-Object -First 1
+  $shaA  = $meta.assets | Where-Object { $_.name -like "*-windows.zip.sha256" } | Select-Object -First 1
+  if (-not $asset) { Die "No Windows package in the latest release." }
+  Ok "version $($meta.tag_name)"
+
+  # ---------- download + verify ----------
+  Step "2/3 - Download & verify"
+  Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers @{ "User-Agent" = "bastion-installer" }
+  if ($shaA) {
+    $shaFile = Join-Path $tmp "bastion.zip.sha256"
+    Invoke-WebRequest -Uri $shaA.browser_download_url -OutFile $shaFile -Headers @{ "User-Agent" = "bastion-installer" }
+    $expect = ((Get-Content -Raw $shaFile) -split '\s+')[0].Trim().ToLower()
+    $got = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLower()
+    if ($expect -ne $got) { Die "Invalid checksum! (corrupted/tampered download)" }
+    Ok "sha256 verified"
+  } else { Warn "no sha256 published - integrity not verified" }
+}
 
 # ---------- installer ----------
 Step "3/3 - Installation"

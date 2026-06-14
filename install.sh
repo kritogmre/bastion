@@ -15,6 +15,15 @@ REPO="bastion"
 INSTALL_DIR="$HOME/.local/share/bastion"
 API="https://api.github.com/repos/$OWNER/$REPO/releases/latest"
 
+# --local <path> : utiliser un paquet déjà téléchargé+vérifié (par le backend, MAJ
+# in-app avec barre de progression) au lieu de re-télécharger.
+LOCAL_PKG=""
+_prev=""
+for a in "$@"; do
+  [ "$_prev" = "--local" ] && LOCAL_PKG="$a"
+  _prev="$a"
+done
+
 if [ -t 1 ]; then
   B="\033[1m"; R="\033[0m"; G="\033[92m"; Y="\033[93m"; C="\033[96m"; M="\033[95m"; E="\033[91m"
 else B=""; R=""; G=""; Y=""; C=""; M=""; E=""; fi
@@ -36,27 +45,35 @@ command -v sha256sum >/dev/null 2>&1 || die "sha256sum is required (coreutils)."
 ok "curl + tar + sha256sum"
 [ "${OWNER:0:2}" = "__" ] && die "Installer not published (OWNER/REPO not set)."
 
-# ---------- résoudre la dernière release ----------
-step "2/4 · Finding the latest version"
-META="$(curl -fsSL "$API")" || die "Cannot reach the GitHub API ($API)."
-# Parse without Python (grep/sed) → works on any Linux.
-TAG="$(printf '%s' "$META" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
-TARBALL_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
-SHA_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz\.sha256"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
-[ -n "$TARBALL_URL" ] || die "No Linux package in the latest release."
-ok "version ${B}$TAG${R}"
-
-# ---------- télécharger + vérifier ----------
-step "3/4 · Download & verify"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-curl -fL# "$TARBALL_URL" -o "$TMP/bastion.tar.gz" || die "Download failed."
-if [ -n "$SHA_URL" ] && curl -fsSL "$SHA_URL" -o "$TMP/bastion.sha256"; then
-  EXPECT="$(cut -d' ' -f1 "$TMP/bastion.sha256")"
-  GOT="$(sha256sum "$TMP/bastion.tar.gz" | cut -d' ' -f1)"
-  [ "$EXPECT" = "$GOT" ] || die "Invalid checksum! (corrupted/tampered download)"
-  ok "sha256 verified"
+if [ -n "$LOCAL_PKG" ]; then
+  # paquet fourni (déjà téléchargé + vérifié par le backend)
+  step "2/4 · Local package"
+  [ -f "$LOCAL_PKG" ] || die "Local package not found: $LOCAL_PKG"
+  cp "$LOCAL_PKG" "$TMP/bastion.tar.gz"
+  ok "using pre-downloaded package"
 else
-  warn "no sha256 published — integrity not verified"
+  # ---------- résoudre la dernière release ----------
+  step "2/4 · Finding the latest version"
+  META="$(curl -fsSL "$API")" || die "Cannot reach the GitHub API ($API)."
+  # Parse without Python (grep/sed) → works on any Linux.
+  TAG="$(printf '%s' "$META" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
+  TARBALL_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
+  SHA_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz\.sha256"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
+  [ -n "$TARBALL_URL" ] || die "No Linux package in the latest release."
+  ok "version ${B}$TAG${R}"
+
+  # ---------- télécharger + vérifier ----------
+  step "3/4 · Download & verify"
+  curl -fL# "$TARBALL_URL" -o "$TMP/bastion.tar.gz" || die "Download failed."
+  if [ -n "$SHA_URL" ] && curl -fsSL "$SHA_URL" -o "$TMP/bastion.sha256"; then
+    EXPECT="$(cut -d' ' -f1 "$TMP/bastion.sha256")"
+    GOT="$(sha256sum "$TMP/bastion.tar.gz" | cut -d' ' -f1)"
+    [ "$EXPECT" = "$GOT" ] || die "Invalid checksum! (corrupted/tampered download)"
+    ok "sha256 verified"
+  else
+    warn "no sha256 published — integrity not verified"
+  fi
 fi
 
 # ---------- installer ----------
