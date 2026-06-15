@@ -14,6 +14,8 @@ OWNER="kritogmre"
 REPO="bastion"
 INSTALL_DIR="$HOME/.local/share/bastion"
 API="https://api.github.com/repos/$OWNER/$REPO/releases/latest"
+# plateforme : Linux ou macOS (même paquet tar.gz + setup.sh)
+case "$(uname -s)" in Darwin) PLAT="macos";; *) PLAT="linux";; esac
 
 # --local <path> : utiliser un paquet déjà téléchargé+vérifié (par le backend, MAJ
 # in-app avec barre de progression) au lieu de re-télécharger.
@@ -58,9 +60,9 @@ else
   META="$(curl -fsSL "$API")" || die "Cannot reach the GitHub API ($API)."
   # Parse without Python (grep/sed) → works on any Linux.
   TAG="$(printf '%s' "$META" | grep -m1 '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')"
-  TARBALL_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
-  SHA_URL="$(printf '%s' "$META" | grep -oE '"browser_download_url": *"[^"]*-linux\.tar\.gz\.sha256"' | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
-  [ -n "$TARBALL_URL" ] || die "No Linux package in the latest release."
+  TARBALL_URL="$(printf '%s' "$META" | grep -oE "\"browser_download_url\": *\"[^\"]*-${PLAT}\\.tar\\.gz\"" | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
+  SHA_URL="$(printf '%s' "$META" | grep -oE "\"browser_download_url\": *\"[^\"]*-${PLAT}\\.tar\\.gz\\.sha256\"" | head -1 | sed -E 's/.*"(https[^"]+)".*/\1/')"
+  [ -n "$TARBALL_URL" ] || die "No ${PLAT} package in the latest release."
   ok "version ${B}$TAG${R}"
 
   # ---------- télécharger + vérifier ----------
