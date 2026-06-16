@@ -22,6 +22,19 @@ exploitation.
 On first launch you must accept these terms. By installing or using Bastion you
 agree to the [license](LICENSE).
 
+### 🎯 Engagements (authorized perimeter)
+
+To keep a scan inside its authorized boundary, define an **engagement**: a named
+scope (one or more host patterns) plus optional notes. Create it in
+**Settings → Engagements** and pick it in any scan/hunt/brute launcher. While an
+engagement is selected, Bastion **refuses every request to a host outside the
+scope** — off-site redirects and external links are blocked before they leave
+your machine, and the report records how many out-of-scope requests were stopped.
+
+Scope patterns (one per line): `example.com`, `*.example.com`,
+`example.com:8080`, `example.com/api` (`host[:port][/path-prefix]`). An empty
+scope means no restriction.
+
 ---
 
 ## 🚀 Install (one line)
