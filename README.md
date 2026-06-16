@@ -90,12 +90,20 @@ You can also drive it entirely from the **command line**.
 - **Recon**: DNS records, subdomains, zone transfer, SPF/DMARC, robots/sitemap,
   Swagger/OpenAPI/GraphQL, JS source maps, `.well-known`, exposed files
 - Code debrief: endpoints, hosts, cloud assets, emails, JWTs mined from JS/HTML
+- **Deep code harvest**: downloads *every* same-origin script and **recovers the
+  original source from source maps** (`//# sourceMappingURL` + inline maps), then
+  **seeds the parameterised endpoints found in the code as attack targets** — so
+  the active modules test what the front-end actually talks to, not just crawled
+  links (on by default for the Full profile)
 
 **Active** (sends payloads — authorized targets only):
-- XSS (multi-context), SQLi (error / boolean-blind / time-based), command
-  injection, LFI / path traversal, SSTI, open redirect, host-header injection,
-  SSRF, NoSQLi, CRLF, XXE, file upload → RCE, IDOR, GraphQL introspection,
-  directory fuzzing
+- XSS (multi-context: html/img/attr/js/template/tag/body), SQLi (error /
+  boolean-blind / time-based), command injection, LFI / path traversal, SSTI,
+  open redirect, host-header injection, SSRF, NoSQLi, CRLF, XXE, file upload →
+  RCE, IDOR, GraphQL introspection, directory fuzzing
+- **Two-request confirmation**: candidate injections are re-checked (the signal
+  must reproduce *and* be absent for a benign control value) to cut false
+  positives while probing harder
 - **Login brute-force** (default creds, missing rate-limit, password spraying,
   CSRF-token aware)
 - **Exploitation phase**: confirmed injections are safely exploited read-only
@@ -109,8 +117,11 @@ You can also drive it entirely from the **command line**.
 
 ## 🤖 AI hunt & analysis
 
-- **AI hunt**: the AI maps the surface, forms ranked hypotheses, auto-verifies
-  the most promising ones, and returns a prioritized debrief with fixes.
+- **AI hunt**: the AI maps the surface — including the **deep-harvested code and
+  the endpoints recovered from source maps** — forms ranked hypotheses,
+  auto-verifies the most promising ones, and returns a prioritized debrief.
+- **AI + pentest combined**: enable *AI analysis* on the full pentest and the AI
+  reviews the whole report automatically as soon as the scan finishes.
 - **AI analysis**: explains findings and suggests fixes; multi-turn Q&A.
 
 Powered by **Claude** by default, or any OpenAI-compatible API — including a
@@ -128,6 +139,16 @@ bastion https://your-target.example --profile furtif # stealth
 bastion serve                                        # start the local API
 bastion --help                                       # all options
 ```
+
+**Saving reports** — by default an HTML report is written to the current
+directory. Choose where every report goes, and which formats:
+```bash
+bastion https://target --active --output-dir ~/reports   # all reports → that dir
+bastion https://target --txt                              # also save the console (text) report
+bastion https://target --json out.json --sarif out.sarif # JSON + SARIF (CI)
+```
+Set a **default report directory** once (used when `--output-dir` is omitted) at
+`http://127.0.0.1:8777/config` or via the `report_dir` config key.
 
 A deliberately vulnerable demo target is included for offline practice:
 ```bash
