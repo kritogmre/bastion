@@ -58,7 +58,10 @@ The installer:
 4. **force-installs the signed browser extension** (Brave / Chrome / Chromium) —
    it appears on its own after a full browser restart and updates automatically.
 
-> **Uninstall:** `~/.local/share/bastion/setup.sh --uninstall` (Linux) ·
+> **Uninstall:** run `bastion uninstall` (add `--purge` to also remove your
+> config and AI key). It stops the backend, removes the browser policy, the
+> launchers and the install directory. Equivalent low-level path:
+> `~/.local/share/bastion/setup.sh --uninstall` (Linux) ·
 > `& "$env:LOCALAPPDATA\Bastion\setup.ps1" -Uninstall` (Windows).
 
 ---
