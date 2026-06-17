@@ -98,6 +98,10 @@ You can also drive it entirely from the **command line**.
   **seeds the parameterised endpoints found in the code as attack targets** — so
   the active modules test what the front-end actually talks to, not just crawled
   links (on by default for the Full profile)
+- **DOM-based XSS (static)**: analyses the JavaScript corpus for client-side
+  source→sink flows (`location`/`document.URL`/`referrer`/`window.name`/
+  `postMessage` → `innerHTML`/`eval`/`document.write`/…) that an HTTP-only scanner
+  can't see — with one-hop taint tracking to keep false positives low
 
 **Active** (sends payloads — authorized targets only):
 - XSS (multi-context: html/img/attr/js/template/tag/body), SQLi (error /
@@ -115,6 +119,11 @@ You can also drive it entirely from the **command line**.
 **Profiles**: Fast · Full · **Stealth** (rotating UAs, spaced requests).
 **WAF evasion**, **proxy pool / Tor** rotation, and **authenticated scans**
 (your browser session) are available in Settings.
+
+**Parallel engine**: scan modules *and* per-target probing inside a module run
+concurrently, so many attack types fire at once. A single global request
+semaphore caps the real network concurrency, so it stays fast without hammering
+the target (Stealth stays sequential and quiet). DNS is cached process-wide.
 
 ---
 
